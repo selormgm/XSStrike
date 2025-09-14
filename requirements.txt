@@ -1,3 +1,5 @@
 tld
 fuzzywuzzy
 requests
+Flask
+Flask-Cors
