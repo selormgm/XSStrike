@@ -2,6 +2,7 @@ import sys
 import os
 import io
 import json
+import core.log
 import copy
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -10,6 +11,9 @@ from urllib.parse import urlparse, unquote
 # Change the current working directory to the directory of the script
 # to ensure the relative imports work correctly.
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# a harmless default so imports don't error; will be overridden inside run_mode anyway
+core.log.setup_logger = lambda name: None
 
 # Now, import the core modules from the XSStrike project.
 # We will create wrappers around these functions to capture their output.
@@ -116,6 +120,19 @@ def run_mode(mode_func, **kwargs):
     # Get the logs captured by the custom logger
     logs = logger.log_messages
     
+        # Restore original stdout
+    sys.stdout = original_stdout
+
+    # Get the logs captured by the custom logger
+    logs = logger.log_messages.copy()
+
+    # Also include any direct prints captured on stdout
+    printed = output.getvalue().strip()
+    if printed:
+        # split lines and append as NO_FORMAT entries
+        for line in printed.splitlines():
+            logs.append({'level': 'NO_FORMAT', 'message': line})
+
     return logs
 
 # API endpoint for the 'scan' mode
